@@ -1,9 +1,7 @@
 [package]
-name = "halo2-scaffold"
+name = "halo2-graph"
 version = "0.3.0"
 edition = "2021"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 rand = "=0.8"
@@ -12,8 +10,10 @@ serde = { version = "=1.0", default-features = false, features = ["derive"] }
 serde_json = "=1.0"
 log = "=0.4"
 env_logger = "=0.10"
-clap = { version = "=4.0", features = ["derive"] }
+clap = { version = "4.1", features = ["derive"] }
 clap-num = "=1.0.2"
+num-bigint = "0.4"
+num-integer = "0.1"
 
 # halo2
 halo2_proofs = { git = "https://github.com/privacy-scaling-explorations/halo2.git", tag = "v2023_02_02" }
@@ -29,22 +29,21 @@ ethers-core = "=2.0.6"
 [features]
 default = []
 
-# Dev / testing mode. We make opt-level = 3 to improve proving times (otherwise it is really slow)
+[patch.crates-io]
+halo2-base = { git = "https://github.com/axiom-crypto/halo2-lib", branch = "community-edition" }
+
 [profile.dev]
 opt-level = 3
-debug = 1 # change to 0 or 2 for more or less debug info
-overflow-checks = true # default
-incremental = true # default
+debug = 1
+overflow-checks = true
+incremental = true
 
-# Local "release" mode, more optimized than dev but faster to compile than release
 [profile.local]
 inherits = "dev"
 opt-level = 3
-# Set this to 1 or 2 to get more useful backtraces
 debug = 1
 debug-assertions = false
 panic = 'unwind'
-# better recompile times
 incremental = true
 lto = "thin"
 codegen-units = 16

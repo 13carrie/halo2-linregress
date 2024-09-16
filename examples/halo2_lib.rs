@@ -8,8 +8,8 @@ use halo2_base::{
     Context,
     QuantumCell::{Constant, Existing, Witness},
 };
-use halo2_scaffold::scaffold::cmd::Cli;
-use halo2_scaffold::scaffold::run;
+use halo2_graph::scaffold::cmd::Cli;
+use halo2_graph::scaffold::run;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]

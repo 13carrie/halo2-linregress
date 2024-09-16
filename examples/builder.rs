@@ -10,8 +10,8 @@ use halo2_base::{
     Context,
     QuantumCell::{Constant, Existing, Witness},
 };
-use halo2_scaffold::scaffold::cmd::Cli;
-use halo2_scaffold::scaffold::run_on_inputs;
+use halo2_graph::scaffold::cmd::Cli;
+use halo2_graph::scaffold::run_on_inputs;
 use rand::rngs::OsRng;
 
 // this algorithm takes a public input x, computes x^2 + 72, and outputs the result as public output

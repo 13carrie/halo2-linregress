@@ -5,7 +5,7 @@ use halo2_base::{
     utils::BigPrimeField,
     AssignedValue,
 };
-use halo2_scaffold::scaffold::{cmd::Cli, run};
+use halo2_graph::scaffold::{cmd::Cli, run};
 use serde::{Deserialize, Serialize};
 use snark_verifier_sdk::halo2::OptimizedPoseidonSpec;
 
