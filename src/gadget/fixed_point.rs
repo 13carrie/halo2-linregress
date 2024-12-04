@@ -31,12 +31,7 @@ impl<F: BigPrimeField, const PRECISION_BITS: u32> FixedPointChip<F, PRECISION_BI
         // Note 254/4 = 63.5
         assert!(PRECISION_BITS <= 63, "support only precision bits <= 63");
         assert!(PRECISION_BITS >= 32, "support only precision bits >= 32");
-        // let gate = RangeChip::new(
-        //     match strategy {
-        //         FixedPointStrategy::Vertical => RangeStrategy::Vertical,
-        //     },
-        //     lookup_bits,
-        // );
+
         let gate = builder.range_chip();
         // Simple uniform symmetric quantization scheme which enforces zero point to be exactly 0
         // to reduce lots of computations.
