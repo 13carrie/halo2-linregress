@@ -1,68 +1,109 @@
 use clap::Parser;
-use halo2_base::gates::circuit::builder::BaseCircuitBuilder;
-use halo2_base::gates::{GateChip, GateInstructions};
-use halo2_base::utils::ScalarField;
-use halo2_base::AssignedValue;
-
-#[derive(Clone, Debug, Serialize, Deserialize)]
-
 #[allow(unused_imports)]
 use halo2_base::{
     Context,
     QuantumCell::{Constant, Existing, Witness},
 };
 use halo2_graph::scaffold::cmd::Cli;
-use halo2_graph::scaffold::run;
-use serde::{Deserialize, Serialize};
-
-use std::marker::PhantomData;
-use halo2_proofs::circuit::Value;
 use halo2_proofs::{
     arithmetic::FieldExt,
     circuit::{Cell, Chip, Layouter, SimpleFloorPlanner},
-    plonk::{Advice, Assigned, Circuit, Column, ConstraintSystem, Error, Fixed, Instance},
-    poly::Rotation,
+    plonk::{Advice, Circuit, Column, ConstraintSystem, Error, Instance},
 };
 
+// Our circuit is going to look like:
+// x   | y   | n   | sum_x| sum_y| sum_xy | sum_x2 | slope | intercept | a | b |
+// x_0 | y_0 | n_0 | sx_0 | sy_0 | sxy_0  | sx2_0  | sl_0  | int_0     |a_0|b_0|   
+// x_1 | y_1 | n_1 | sx_1 | sy_1 | sxy_1  | sx2_1  | sl_1  | int_1     |a_1|b_1|
+// x_2 | y_2 | n_2 | sx_2 | sy_2 | sxy_2  | sx2_2  | sl_2  | int_2     |a_2|b_2|
+// ...
+// with constraints:
+// slope == b (within a certain degree of error)
+// intercept == a (within a certain degree of error)
+// ...
+
+#[derive(Clone, Default)]
 struct LinRegressConfig {
-    x: Column<Advice>, // private input
+    x: Column<Advice>, // private input (change to meta.advice_column();?)
     y: Column<Advice>,
+    n: Column<Advice>,
     sum_x: Column<Advice>, // private intermediate
     sum_y: Column<Advice>,
     sum_xy: Column<Advice>,
     sum_x2: Column<Advice>,
-    n: Column<Advice>,
+    slope: Column<Advice>,
+    intercept: Column<Advice>,
     a: Column<Instance>, // public input
     b: Column<Instance>,
 }
 
-impl LinRegressConfig {}
+impl LinRegressConfig {
+    pub fn configure<F: FieldExt>(meta: &mut ConstraintSystem<F>) -> Self {
+        // define all the columns here + enable equality constraints
+        let x = meta.advice_column();
+        let y = meta.advice_column();
+        let n = meta.advice_column();
+        let sum_x = meta.advice_column();
+        let sum_y = meta.advice_column();
+        let sum_xy = meta.advice_column();
+        let sum_x2 = meta.advice_column();
+        let slope = meta.advice_column();
+        let intercept = meta.advice_column();
+        let a = meta.instance_column();
+        let b = meta.instance_column();
 
-struct LinRegressCircuit {
-    config: LinRegressConfig,
+        // enable equality constraint for comparison columns
+        meta.enable_equality(a);
+        meta.enable_equality(b);
+        meta.enable_equality(slope);
+        meta.enable_equality(intercept);
+
+        // ok now do the gates
+        // we just need all of our constraints to hold
+        // for one row in the table
+        // ... i think
+
+        // summing vectors gate:
+            // set sum == 0
+            // for value in the vector, sum += value
+            // return sum
+
+        // multiplying vectors gate:
+
+
+        // division gate? take from zkfixedpointchip?
+
+        Self { x, y, n, sum_x, sum_y, sum_xy, sum_x2, slope, intercept, a, b }
+    }
 }
 
-impl Circuit<Fp> for LinRegressCircuit {
+#[derive(Clone, Default)]
+struct LinRegressCircuit<F> {
+    config: LinRegressConfig,
+    // assign value<t>/witness to each column here
+}
+
+impl Circuit<F> for LinRegressCircuit<F> {
+    type Config = LinRegressConfig;
+    type FloorPlanner = SimpleFloorPlanner;
+
+    fn without_witnesses(&self) -> Self {
+        unimplemented!()
+    }
+
     // configure method:
+    fn configure(meta: &mut ConstraintSystem<F>) -> Self::Config {
+        //LinRegressConfig::configure::<F>(meta)
+    }
 
     // synthesise method:
-        // this is where you compute all the intermediate values like a and b
+    fn synthesize(&self, config: Self::Config, layouter: impl Layouter<F>) -> Result<(), Error> {
+        // this is where you compute all the intermediate values like sums
+        // and also a and b
+        // and also put all the constraints here
+    }
 }
 
-
-struct LinRegressChip {
-    config: LinRegressConfig,
-}
-
-impl LinRegressChip {
-    // summing vectors gate:
-
-    // multiplying vectors gate:
-
-    // division gate?
-
-    //
-}
 
 
 fn main() {
