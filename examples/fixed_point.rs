@@ -35,7 +35,6 @@ fn fixed_point_mul<F: ScalarField>(
     // make_public.extend([x, y]);
 
     let prod = fixed_point_chip.qmul(ctx, x, y);
-    let add = fixed_point_chip.qadd(ctx, x, y);
     
     make_public.push(prod);
     let prod_decimal = fixed_point_chip.dequantization(*prod.value());

@@ -38,7 +38,10 @@ fn linear_regression_circuit<F: BigPrimeField>(
 
     // Convert field elements to QuantumCell<F>
     let x_quantum_cells: Vec<_> = x_values.iter().map(|&val| QuantumCell::Witness(val)).collect();
+    let x_quantum_cells_2 = x_quantum_cells.clone();
     let y_quantum_cells: Vec<_> = y_values.iter().map(|&val| QuantumCell::Witness(val)).collect();
+    let y_quantum_cells_2 = y_quantum_cells.clone();
+
 
     let a_decimal = input.a;
     let a = fixed_point_chip.quantization(input.a);
@@ -51,15 +54,31 @@ fn linear_regression_circuit<F: BigPrimeField>(
     let n = x_values_decimal.len();
     println!("n: {:?}", n);
 
+    let sum_x: AssignedValue<F> = fixed_point_chip.qsum(ctx, x_values.iter().map(|&val| QuantumCell::Witness(val)));
+    let sum_y: AssignedValue<F> = fixed_point_chip.qsum(ctx, y_values.iter().map(|&val| QuantumCell::Witness(val)));
+    let sum_xy = fixed_point_chip.inner_product(
+        ctx,
+        x_values.iter().map(|&val| QuantumCell::Witness(val)),
+        y_values.iter().map(|&val| QuantumCell::Witness(val)),
+    );
+    let sum_x2 = fixed_point_chip.inner_product(
+        ctx,
+        x_values.iter().map(|&val| QuantumCell::Witness(val)),
+        x_values.iter().map(|&val| QuantumCell::Witness(val)),
+    );
+
+    /*
     let sum_x: AssignedValue<F> = fixed_point_chip.qsum(ctx, x_quantum_cells);
     let sum_y: AssignedValue<F> = fixed_point_chip.qsum(ctx, y_quantum_cells);
-    // let sum_xy = fixed_point_chip.inner_product(ctx, x_quantum_cells, y_quantum_cells);
+    let sum_xy = fixed_point_chip.inner_product(ctx, x_quantum_cells_2, y_quantum_cells_2);
+    */
 
     let a = ctx.load_witness(a);
     let b = ctx.load_witness(b);
 
 
     // 3. calculate slope and intercept using zkfixedpointchip
+    
 
 
     // 4. compare a and b with slope and intercept
