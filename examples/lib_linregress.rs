@@ -1,6 +1,6 @@
 use clap::Parser;
 use halo2_base::gates::circuit::builder::BaseCircuitBuilder;
-use halo2_base::gates::RangeChip;
+// use halo2_base::gates::RangeChip;
 use halo2_graph::gadget::fixed_point::{FixedPointChip, FixedPointInstructions};
 use halo2_base::utils::BigPrimeField;
 use halo2_base::AssignedValue;
@@ -28,17 +28,18 @@ fn linear_regression_circuit<F: BigPrimeField>(
     const PRECISION: u32 = 63;
     let fixed_point_chip = FixedPointChip::<F, PRECISION>::default(builder);
     let ctx = builder.main(0);
-    let range: &RangeChip<F> = fixed_point_chip.range_gate();
+    // let range: &RangeChip<F> = fixed_point_chip.range_gate();
 
     // 1. load inputs
     let x_values_decimal: Vec<_> = input.x;
     let x_values: Vec<_> = x_values_decimal.iter().map(|&val| fixed_point_chip.quantization(val)).collect();
     let y_values_decimal: Vec<_> = input.y;
     let y_values: Vec<_> = y_values_decimal.iter().map(|&val| fixed_point_chip.quantization(val)).collect();
+    
 
     // Convert field elements to QuantumCell<F>
-    let x_quantum_cells: Vec<_> = x_values.iter().map(|&val| QuantumCell::Witness(val)).collect();
-    let y_quantum_cells: Vec<_> = y_values.iter().map(|&val| QuantumCell::Witness(val)).collect();
+    // let x_quantum_cells: Vec<_> = x_values.iter().map(|&val| QuantumCell::Witness(val)).collect();
+    // let y_quantum_cells: Vec<_> = y_values.iter().map(|&val| QuantumCell::Witness(val)).collect();
 
 
     let a_decimal = input.a;
@@ -93,9 +94,9 @@ fn linear_regression_circuit<F: BigPrimeField>(
     let slope_denominator = fixed_point_chip.qmul(ctx, n_sum_x2, sqrd_sum_x);
     let slope = fixed_point_chip.qdiv(ctx, slope_numerator, slope_denominator);
 
-
     // 4. compare a and b with slope and intercept
-    // assert_eq!(slope, b);
+    assert_eq!(slope.value(), b.value());
+    assert_eq!(intercept.value(), a.value());
     // assert_eq!(intercept, a);
 }
 
