@@ -1,6 +1,5 @@
 use clap::Parser;
 use halo2_base::gates::circuit::builder::BaseCircuitBuilder;
-// use halo2_base::gates::RangeChip;
 use halo2_graph::gadget::fixed_point::{FixedPointChip, FixedPointInstructions};
 use halo2_base::utils::BigPrimeField;
 use halo2_base::AssignedValue;
@@ -28,7 +27,6 @@ fn linear_regression_circuit<F: BigPrimeField>(
     const PRECISION: u32 = 63;
     let fixed_point_chip = FixedPointChip::<F, PRECISION>::default(builder);
     let ctx = builder.main(0);
-    // let range: &RangeChip<F> = fixed_point_chip.range_gate();
 
 
     // 1. load inputs
@@ -60,19 +58,17 @@ fn linear_regression_circuit<F: BigPrimeField>(
         y_values.iter().map(|&val| QuantumCell::Witness(val)),
     );
     println!("sum xy: {:?}", fixed_point_chip.dequantization(*sum_xy.value()));
-    let sum_x2 = fixed_point_chip.inner_product(
+    let sum_xsquared = fixed_point_chip.inner_product(
         ctx,
         x_values.iter().map(|&val| QuantumCell::Witness(val)),
         x_values.iter().map(|&val| QuantumCell::Witness(val)),
     );
-    println!("sum x2: {:?}", fixed_point_chip.dequantization(*sum_x2.value()));
+    println!("sum x2: {:?}", fixed_point_chip.dequantization(*sum_xsquared.value()));
 
 
     // 3. calculate slope and intercept using zkfixedpointchip
-    // let two = Constant(F::from(2));
-    // println!("two: {:?}", fixed_point_chip.dequantization(*two.value()));
 
-    let sum_y_sum_x2 = fixed_point_chip.qmul(ctx, sum_y, sum_x2);
+    let sum_y_sum_x2 = fixed_point_chip.qmul(ctx, sum_y, sum_xsquared);
     println!("sum y * sum xsquared: {:?}", fixed_point_chip.dequantization(*sum_y_sum_x2.value()));
     let sum_x_sum_xy = fixed_point_chip.qmul(ctx, sum_x, sum_xy);
     println!("sum x * sum xy: {:?}", fixed_point_chip.dequantization(*sum_x_sum_xy.value()));
@@ -83,7 +79,7 @@ fn linear_regression_circuit<F: BigPrimeField>(
     let intercept_numerator = fixed_point_chip.qsub(ctx, sum_y_sum_x2, sum_x_sum_xy);
     println!("intercept_numerator: {:?}", fixed_point_chip.dequantization(*intercept_numerator.value()));
 
-    let intercept_denominator = fixed_point_chip.qsub(ctx, sum_x2, sqrd_sum_x);
+    let intercept_denominator = fixed_point_chip.qsub(ctx, sum_xsquared, sqrd_sum_x);
     println!("intercept_denominator: {:?}", fixed_point_chip.dequantization(*intercept_denominator.value()));
 
     let intercept = fixed_point_chip.qdiv(ctx, intercept_numerator, intercept_denominator);
@@ -91,10 +87,10 @@ fn linear_regression_circuit<F: BigPrimeField>(
 
 
 
-    let n = Constant(F::from(x_values_decimal.len() as u64));
+    let n = QuantumCell::Witness(F::from(x_values_decimal.len() as u64));
     let n_sum_xy = fixed_point_chip.qmul(ctx, n, sum_xy);
     let sum_x_sum_y = fixed_point_chip.qmul(ctx, sum_x, sum_y);
-    let n_sum_x2 = fixed_point_chip.qmul(ctx, n, sum_x2);
+    let n_sum_x2 = fixed_point_chip.qmul(ctx, n, sum_xsquared);
     let slope_numerator = fixed_point_chip.qmul(ctx, n_sum_xy, sum_x_sum_y);
     let slope_denominator = fixed_point_chip.qmul(ctx, n_sum_x2, sqrd_sum_x);
     let slope = fixed_point_chip.qdiv(ctx, slope_numerator, slope_denominator);
