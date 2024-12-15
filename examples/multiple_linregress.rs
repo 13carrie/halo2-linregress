@@ -1,10 +1,10 @@
+use std::time::Instant;
 use clap::Parser;
 use halo2_base::gates::circuit::builder::BaseCircuitBuilder;
 use halo2_graph::gadget::fixed_point::{FixedPointChip, FixedPointInstructions};
 use halo2_base::utils::BigPrimeField;
 use halo2_base::AssignedValue;
 use halo2_base::QuantumCell;
-
 
 #[allow(unused_imports)]
 use halo2_graph::scaffold::cmd::Cli;
@@ -44,88 +44,66 @@ fn multiple_linear_regression_circuit<F: BigPrimeField>(
     let x2 = &x_values[1];
 
     let sum_x1: AssignedValue<F> = fixed_point_chip.qsum(ctx, x1.iter().map(|&val| QuantumCell::Witness(val)));
-    println!("sum_x1: {:?}", fixed_point_chip.dequantization(*sum_x1.value()));
     let sum_x2: AssignedValue<F> = fixed_point_chip.qsum(ctx, x2.iter().map(|&val| QuantumCell::Witness(val)));
-    println!("sum_x2: {:?}", fixed_point_chip.dequantization(*sum_x2.value()));
     let sum_y: AssignedValue<F> = fixed_point_chip.qsum(ctx, y_values.iter().map(|&val| QuantumCell::Witness(val)));
-    println!("sum_y: {:?}", fixed_point_chip.dequantization(*sum_y.value()));
 
     let sum_x1squared = fixed_point_chip.inner_product(
         ctx,
         x1.iter().map(|&val| QuantumCell::Witness(val)),
         x1.iter().map(|&val| QuantumCell::Witness(val)),
     );
-    println!("sum_x1squared: {:?}", fixed_point_chip.dequantization(*sum_x1squared.value()));
 
     let sum_x2squared = fixed_point_chip.inner_product(
         ctx,
         x2.iter().map(|&val| QuantumCell::Witness(val)),
         x2.iter().map(|&val| QuantumCell::Witness(val)),
     );
-    println!("sum_x2squared: {:?}", fixed_point_chip.dequantization(*sum_x2squared.value()));
 
     let sum_x1y = fixed_point_chip.inner_product(
         ctx,
         x1.iter().map(|&val| QuantumCell::Witness(val)),
         y_values.iter().map(|&val| QuantumCell::Witness(val)),
     );
-    println!("sum_x1y: {:?}", fixed_point_chip.dequantization(*sum_x1y.value()));
 
     let sum_x2y = fixed_point_chip.inner_product(
         ctx,
         x2.iter().map(|&val| QuantumCell::Witness(val)),
         y_values.iter().map(|&val| QuantumCell::Witness(val)),
     );
-    println!("sum_x2y: {:?}", fixed_point_chip.dequantization(*sum_x2y.value()));
 
     let sum_x1x2 = fixed_point_chip.inner_product(
         ctx,
         x1.iter().map(|&val| QuantumCell::Witness(val)),
         x2.iter().map(|&val| QuantumCell::Witness(val)),
     );
-    println!("sum_x1x2: {:?}", fixed_point_chip.dequantization(*sum_x1x2.value()));
-
 
     // 3. calculate regression sums
     // regression sum x1: (sum_x1squared - (sum_x1)^2/n)
     let sqrd_sum_x1 = fixed_point_chip.qmul(ctx, sum_x1, sum_x1);
-    println!("sqrd_sum_x1: {:?}", fixed_point_chip.dequantization(*sqrd_sum_x1.value()));
     let length = x_values_decimal[0].len();
-    println!("length: {:?}", length);
     let n = QuantumCell::Witness(fixed_point_chip.quantization(length as f64));
     let sqrd_sum_x1_div_n = fixed_point_chip.qdiv(ctx, sqrd_sum_x1, n);
-    println!("sqrd_sum_x1_div_n: {:?}", fixed_point_chip.dequantization(*sqrd_sum_x1_div_n.value()));
     let regression_sum_x1 = fixed_point_chip.qsub(ctx, sum_x1squared, sqrd_sum_x1_div_n);
-    println!("regression_sum_x1: {:?}", fixed_point_chip.dequantization(*regression_sum_x1.value()));
 
-    
     // regression sum x2: (sum_x2squared - (sum_x2)^2/n)
     let sqrd_sum_x2 = fixed_point_chip.qmul(ctx, sum_x2, sum_x2);
     let sqrd_sum_x2_div_n = fixed_point_chip.qdiv(ctx, sqrd_sum_x2, n);
     let regression_sum_x2 = fixed_point_chip.qsub(ctx, sum_x2squared, sqrd_sum_x2_div_n);
-    println!("regression_sum_x2: {:?}", fixed_point_chip.dequantization(*regression_sum_x2.value()));
-
 
     // regression sum x1y: (sum_x1y - (sum_x1*sum_y)/n)
     let sum_x1_mul_sum_y = fixed_point_chip.qmul(ctx, sum_x1, sum_y);
     let sum_x1_mul_sum_y_div_n = fixed_point_chip.qdiv(ctx, sum_x1_mul_sum_y, n);
     let regression_sum_x1y = fixed_point_chip.qsub(ctx, sum_x1y, sum_x1_mul_sum_y_div_n);
-    println!("regression_sum_x1y: {:?}", fixed_point_chip.dequantization(*regression_sum_x1y.value()));
-
 
     // regression sum x2y: (sum_x2y - (sum_x2*sum_y)/n)
     let sum_x2_mul_sum_y = fixed_point_chip.qmul(ctx, sum_x2, sum_y);
     let sum_x2_mul_sum_y_div_n = fixed_point_chip.qdiv(ctx, sum_x2_mul_sum_y, n);
     let regression_sum_x2y = fixed_point_chip.qsub(ctx, sum_x2y, sum_x2_mul_sum_y_div_n);
-    println!("regression_sum_x2y: {:?}", fixed_point_chip.dequantization(*regression_sum_x2y.value()));
-
 
     // regression sum x1x2: (sum_x1x2 - (sum_x1*sum_x2)/n)
     let sum_x1_mul_sum_x2 = fixed_point_chip.qmul(ctx, sum_x1, sum_x2);
     let sum_x1_mul_sum_x2_div_n = fixed_point_chip.qdiv(ctx, sum_x1_mul_sum_x2, n);
     let regression_sum_x1x2 = fixed_point_chip.qsub(ctx, sum_x1x2, sum_x1_mul_sum_x2_div_n);
-    println!("regression_sum_x1x2: {:?}", fixed_point_chip.dequantization(*regression_sum_x1x2.value()));
-
 
     // 4. calculate b0 (intercept), b1 (coefficient of x1), b2 (coefficient of x2)
     let regression_sum_x2_sum_x1y = fixed_point_chip.qmul(ctx, regression_sum_x2, regression_sum_x1y);
@@ -152,10 +130,14 @@ fn multiple_linear_regression_circuit<F: BigPrimeField>(
     let b0 = fixed_point_chip.qsub(ctx, y_mean_minus_b1_x1_mean, b2_x2_mean);
 
     // 5. compare provided coefficients (in vector) with b0, b1, b2
-    let error_rate = 0.3;
+    let error_rate = 0.1;
     let b0_decimal = fixed_point_chip.dequantization(*b0.value());
+    println!("b0 (intercept): {:?}", b0_decimal);
     let b1_decimal = fixed_point_chip.dequantization(*b1.value());
+    println!("b1: {:?}", b1_decimal);
     let b2_decimal = fixed_point_chip.dequantization(*b2.value());
+    println!("b2: {:?}", b2_decimal);
+    
     assert!((&coefficients[0] - b0_decimal).abs() <= error_rate);
     assert!((&coefficients[1] - b1_decimal).abs() <= error_rate);
     assert!((&coefficients[2] - b2_decimal).abs() <= error_rate);
@@ -166,5 +148,9 @@ fn main() {
 
     let args = Cli::parse();
 
+    let now = Instant::now();
     run(multiple_linear_regression_circuit, args);
+    
+    let elapsed = now.elapsed();
+    println!("Elapsed: {:.2?}", elapsed);
 }
