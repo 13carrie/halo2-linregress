@@ -3,7 +3,7 @@ use halo2_base::gates::circuit::builder::BaseCircuitBuilder;
 use halo2_graph::gadget::fixed_point::{FixedPointChip, FixedPointInstructions};
 use halo2_base::utils::BigPrimeField;
 use halo2_base::AssignedValue;
-use halo2_base::{QuantumCell, QuantumCell::Constant};
+use halo2_base::QuantumCell;
 
 
 #[allow(unused_imports)]
@@ -75,21 +75,22 @@ fn linear_regression_circuit<F: BigPrimeField>(
     let sqrd_sum_x = fixed_point_chip.qmul(ctx, sum_x, sum_x);
     println!("sqrd_sum_x: {:?}", fixed_point_chip.dequantization(*sqrd_sum_x.value()));
 
-
     let intercept_numerator = fixed_point_chip.qsub(ctx, sum_y_sum_x2, sum_x_sum_xy);
     println!("intercept_numerator: {:?}", fixed_point_chip.dequantization(*intercept_numerator.value()));
-
-    let intercept_denominator = fixed_point_chip.qsub(ctx, sum_xsquared, sqrd_sum_x);
+    let intercept_denominator = fixed_point_chip.qsub(ctx, sqrd_sum_x, sum_xsquared);
     println!("intercept_denominator: {:?}", fixed_point_chip.dequantization(*intercept_denominator.value()));
-
     let intercept = fixed_point_chip.qdiv(ctx, intercept_numerator, intercept_denominator);
     println!("intercept: {:?}", fixed_point_chip.dequantization(*intercept.value()));
 
 
-
-    let n = QuantumCell::Witness(F::from(x_values_decimal.len() as u64));
+    let length = x_values_decimal.len();
+    println!("length: {:?}", length);
+    let n = QuantumCell::Witness(fixed_point_chip.quantization(length as f64));
+    println!("n: {:?}", fixed_point_chip.dequantization(*n.value()));
     let n_sum_xy = fixed_point_chip.qmul(ctx, n, sum_xy);
+    println!("n_sum_xy: {:?}", fixed_point_chip.dequantization(*n_sum_xy.value()));
     let sum_x_sum_y = fixed_point_chip.qmul(ctx, sum_x, sum_y);
+    println!("sum_x_sum_y: {:?}", fixed_point_chip.dequantization(*sum_x_sum_y.value()));
     let n_sum_x2 = fixed_point_chip.qmul(ctx, n, sum_xsquared);
     let slope_numerator = fixed_point_chip.qmul(ctx, n_sum_xy, sum_x_sum_y);
     let slope_denominator = fixed_point_chip.qmul(ctx, n_sum_x2, sqrd_sum_x);
