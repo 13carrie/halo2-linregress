@@ -1,3 +1,24 @@
+## Notes on Linear Regression (simple_linregress and multiple_linregress)
+
+Quick Start: follow steps below to ensure that Rust and Halo2 are correctly configured.
+
+To recreate my experiment results, use the following template:
+
+```bash
+DEGREE=8 LOOKUP_BITS=6 cargo run --example [simple|multiple]-linregress -- --name [name of .in file you would like to use as test data] -k 8 mock
+```
+
+For example, to run multiple_linregress3.in (1000 observations, noisy), do:
+```bash
+DEGREE=8 LOOKUP_BITS=6 cargo run --example multiple-linregress -- --name multiple_linregress3 -k 8 mock
+```
+
+In my experience it is necessary to declare these environmental variables (DEGREE, LOOKUP_BITS). If you are experiencing a 'lookup bits not set' panic, excluding these variables may be the reason why.
+
+The time it takes to run each proof can vary wildly based on your platform/specs. I have only run this code 
+on a MacBook M2 thus far.
+
+
 # Halo2 Scaffolding
 
 This repository is intended to provide a playground for you to easily start writing a ZK circuit using the Halo2 proving stack.
